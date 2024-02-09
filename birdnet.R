@@ -12,17 +12,27 @@
 # 4) The processing works for files with this format: # FORMAT: ID_Date_Hour.wav, example: (IREC-14_20230330_072002.wav)
 # 5) Switches are used to split the prog run (0 = off, 1 = on) in processing and postprocessing
 
+# Rlibraries dependencies!
+# library(data.table)
+# library(purrr)
+# library(dplyr)
+# library(lubridate)
+# library(hms) 
+################################################################################
+
 # Switches (to split run, 0 = off, 1 = on)
 #-------------------------------------------------------------------------------
 switch1 = 1 # prepro and running birdnet
 switch2 = 1 # postpro 
-  
+
+
 # VARS section (MANDATORY)
 #-------------------------------------------------------------------------------
 # SPECIFY ABSOLUTE PATHS!
 datadir = "/media/sergiolp/TOSHIBA EXT/GRABACIONES/Puerto del Toro/Irec 14 - PU AUDIO 4/Data2" # Define the data directory with .wav files
 resultsdir = "/home/sergiolp/Desktop/results_test" # Don't create the folder, it will be created by birdnet!
-postprocessing_script = "/home/sergiolp/Work/IREC/progs/d1.31/birdnetIREC/processOutputs.R" #path to the postpro script
+postprocessing_script = "/home/sergiolp/Work/IREC/progs/d1.31/IREC_birdnet/processOutputs.R" #path to the postpro script
+outputSite = "/home/sergiolp/Desktop/" #path for the final .csv by site
 
 # Other vars used by birdnet and postprocess script, info: https://github.com/kahst/BirdNET-Analyzer/tree/main/docs
 lat= 38.99416
@@ -37,7 +47,7 @@ locale = "es"
 #process
 #########
 
-if (switch1 = 1) {
+if (switch1 == 1) {
   
   # List all .wav files in the working directory
   files <- list.files(datadir, pattern = "\\.wav$", full.names = TRUE)
@@ -87,9 +97,9 @@ if (switch1 = 1) {
 # postpro
 ###########
 
-if (switch2 = 1) {
+if (switch2 == 1) {
   
-  postprocessing_command <- sprintf("Rscript %s '%s' '%s' '%s' '%s'", postprocessing_script, site, resultsdir, lat, lon)
+  postprocessing_command <- sprintf("Rscript %s '%s' '%s' '%s' '%s' '%s'", postprocessing_script, site, resultsdir, lat, lon, outputSite)
   system(postprocessing_command, wait = TRUE)
   
 }

@@ -1,15 +1,30 @@
+# Project: IREC_birdnet
+#
+# Author: shevelp (github), sergio.lopez@uclm.es)
+# Post processing script
+# R dependences:
+# library(data.table)
+# library(purrr)
+# library(dplyr)
+# library(lubridate)
+# library(hms) 
+################################################################################
+
+# Rlibraries
 library(data.table)
 library(purrr)
 library(dplyr)
 library(lubridate)
 library(hms) 
 
-# Lista de archivos .csv #args: 1) nombre, 2) path, 3) lat, 4) lon
+
+# Lista de archivos .csv #args: 1) nombre, 2) path, 3) lat, 4) lon 5)path to store the final .csv
 args <- commandArgs(trailingOnly = TRUE)
 site <- args[1]
 path_csvs <- args[2]
 lat_arg <- args[3]
 long_arg <- args[4]
+output_finalcsv <- args[5] #"/home/sergiolp/Desktop/"
 
 output_files <- list.files(path_csvs, pattern = "\\.csv$", full.names = TRUE)
 
@@ -59,7 +74,7 @@ output <- merged %>%
 
 
 # Guardar el archivo de salida
-output_file_name <- paste0("/home/sergiolp/Desktop/", site, "_", unique(output$ID), ".csv")
+output_file_name <- paste0(output_finalcsv, site, "_", unique(output$ID), ".csv")
 write.csv(output, output_file_name, row.names = FALSE)
 
 # Imprimir la ruta del archivo guardado
