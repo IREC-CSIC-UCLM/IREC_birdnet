@@ -43,6 +43,9 @@ threads = 4
 rtype = "csv"
 locale = "es"
 
+# Identify OS
+os_name <- Sys.info()["sysname"]; print(os_name)
+
 ##########
 #process
 #########
@@ -51,6 +54,7 @@ if (switch1 == 1) {
   
   # List all .wav files in the working directory
   files <- list.files(datadir, pattern = "\\.wav$", full.names = TRUE)
+  files <- files[1:3]
   
   # Process each file
   # FORMAT: ID_Date_Hour.wav, example: (IREC-14_20230330_072002.wav)
@@ -58,29 +62,34 @@ if (switch1 == 1) {
     if (file.exists(file)) {
       filename <- basename(file)
       cat("Processing file:", filename, "\n")
-      
+
       # Extract the date from the file name
       parts <- strsplit(filename, "_")[[1]]
       date_str <- parts[2]
-      
+
       # Format the date
       year <- substr(date_str, 1, 4)
       month <- substr(date_str, 5, 6)
       day <- substr(date_str, 7, 8)
-      
+
       # Construct the date in yyyy-mm-dd format
       formatted_date <- paste(year, month, day, sep = "-")
-      
+
       # Check if the date is valid and get the week number
       if (tryCatch(as.Date(formatted_date), error = function(e) FALSE)) {
         week_num <- format(as.Date(formatted_date), "%V")
-        
-        # Build the Docker run command
-        docker_command <- sprintf("docker run -v '%s:/input' -v '%s:/output' birdnet analyze.py --i '/input/%s' --o '/output/%s.csv' --min_conf %s --threads %d --rtype %s --locale %s --lat '%s' --lon '%s' --week '%s'", datadir, resultsdir, filename, sub("\\.wav$", "", filename), min_conf, threads, rtype, locale, lat, lon, week_num)
-        
-        # Execute the Docker command
+
+        # If Windows
+        if (os_name == "Windows") {
+          docker_command <- sprintf("docker run -v '%s:/input' -v '%s:/output' birdnet analyze.py --i '/input/%s' --o '/output/%s.csv' --min_conf %s --threads %d --rtype %s --locale %s --lat '%s' --lon '%s' --week '%s'", gsub("/", "\\\\", datadir), gsub("/", "\\\\", resultsdir), filename, sub("\\.wav$", "", filename), min_conf, threads, rtype, locale, lat, lon, week_num)
+        } else {
+        # If Linux/Mac
+          docker_command <- sprintf("docker run -v '%s:/input' -v '%s:/output' birdnet analyze.py --i '/input/%s' --o '/output/%s.csv' --min_conf %s --threads %d --rtype %s --locale %s --lat '%s' --lon '%s' --week '%s'", datadir, resultsdir, filename, sub("\\.wav$", "", filename), min_conf, threads, rtype, locale, lat, lon, week_num)
+        }
+
+        # Run docker command
         system(docker_command, wait = TRUE)
-        
+
         cat("File", filename, "analyzed with BirdNet using Docker\n")
       } else {
         cat("Invalid date in file name:", filename, "\n")
@@ -89,7 +98,7 @@ if (switch1 == 1) {
       cat("File not found:", file, "\n")
     }
   }
-  
+
 }
 
 
@@ -98,9 +107,20 @@ if (switch1 == 1) {
 ###########
 
 if (switch2 == 1) {
-  
-  postprocessing_command <- sprintf("Rscript %s '%s' '%s' '%s' '%s' '%s'", postprocessing_script, site, resultsdir, lat, lon, outputSite)
+
+  if (os_name == "Windows") {
+
+    # Check Windows paths
+    postprocessing_script_win = gsub("/", "\\\\", postprocessing_script)
+    resultsdir_win = gsub("/", "\\\\", resultsdir)
+
+    # Postpro windows
+    postprocessing_command <- sprintf("Rscript %s '%s' '%s' '%s' '%s' '%s'", postprocessing_script_win, site, resultsdir_win, lat, lon, outputSite)
+} else {
+    # Postpro Unix/Linux/MacOS
+    postprocessing_command <- sprintf("Rscript %s '%s' '%s' '%s' '%s' '%s'", postprocessing_script, site, resultsdir, lat, lon, outputSite)
+}
   system(postprocessing_command, wait = TRUE)
-  
+
 }
 
