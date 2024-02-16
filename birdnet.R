@@ -54,7 +54,6 @@ if (switch1 == 1) {
   
   # List all .wav files in the working directory
   files <- list.files(datadir, pattern = "\\.wav$", full.names = TRUE)
-  files <- files[1:3]
   
   # Process each file
   # FORMAT: ID_Date_Hour.wav, example: (IREC-14_20230330_072002.wav)
