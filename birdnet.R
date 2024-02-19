@@ -29,7 +29,7 @@ switch2 = 1 # postpro
 # VARS section (MANDATORY)
 #-------------------------------------------------------------------------------
 # SPECIFY ABSOLUTE PATHS!
-datadir = "/media/sergiolp/TOSHIBA EXT/GRABACIONES/Puerto del Toro/Irec 14 - PU AUDIO 4/Data2" # Define the data directory with .wav files
+datadir = "/media/sergiolp/TOSHIBA EXT/GRABACIONES/Quintos/Qaudio3--IREC13/Data2" # Define the data directory with .wav files
 resultsdir = "/home/sergiolp/Desktop/results_test" # Don't create the folder, it will be created by birdnet!
 postprocessing_script = "/home/sergiolp/Work/IREC/progs/d1.31/IREC_birdnet/processOutputs.R" #path to the postpro script
 outputSite = "/home/sergiolp/Desktop/" #path for the final .csv by site
@@ -61,34 +61,37 @@ if (switch1 == 1) {
     if (file.exists(file)) {
       filename <- basename(file)
       cat("Processing file:", filename, "\n")
-
+      
       # Extract the date from the file name
       parts <- strsplit(filename, "_")[[1]]
       date_str <- parts[2]
-
+      
       # Format the date
       year <- substr(date_str, 1, 4)
       month <- substr(date_str, 5, 6)
       day <- substr(date_str, 7, 8)
-
+      
       # Construct the date in yyyy-mm-dd format
       formatted_date <- paste(year, month, day, sep = "-")
-
+      
       # Check if the date is valid and get the week number
       if (tryCatch(as.Date(formatted_date), error = function(e) FALSE)) {
         week_num <- format(as.Date(formatted_date), "%V")
-
+        
         # If Windows
         if (os_name == "Windows") {
-          docker_command <- sprintf("docker run -v '%s:/input' -v '%s:/output' birdnet analyze.py --i '/input/%s' --o '/output/%s.csv' --min_conf %s --threads %d --rtype %s --locale %s --lat '%s' --lon '%s' --week '%s'", gsub("/", "\\\\", datadir), gsub("/", "\\\\", resultsdir), filename, sub("\\.wav$", "", filename), min_conf, threads, rtype, locale, lat, lon, week_num)
+          docker_command <- sprintf(
+            "docker run -v \"%s:/input\" -v \"%s:/output\" birdnet:latest analyze.py --i \"/input/%s\" --o \"/output/%s.csv\" --min_conf %s --threads %d --rtype %s --locale %s --lat \"%s\" --lon \"%s\" --week \"%s\"",
+            datadir, resultsdir, filename, sub("\\.wav$", "", filename), min_conf, threads, rtype, locale, lat, lon, week_num
+          )
         } else {
-        # If Linux/Mac
+          # If Linux/Mac
           docker_command <- sprintf("docker run -v '%s:/input' -v '%s:/output' birdnet analyze.py --i '/input/%s' --o '/output/%s.csv' --min_conf %s --threads %d --rtype %s --locale %s --lat '%s' --lon '%s' --week '%s'", datadir, resultsdir, filename, sub("\\.wav$", "", filename), min_conf, threads, rtype, locale, lat, lon, week_num)
         }
-
+        
         # Run docker command
         system(docker_command, wait = TRUE)
-
+        
         cat("File", filename, "analyzed with BirdNet using Docker\n")
       } else {
         cat("Invalid date in file name:", filename, "\n")
@@ -97,7 +100,7 @@ if (switch1 == 1) {
       cat("File not found:", file, "\n")
     }
   }
-
+  
 }
 
 
@@ -106,20 +109,25 @@ if (switch1 == 1) {
 ###########
 
 if (switch2 == 1) {
-
+  
   if (os_name == "Windows") {
-
-    # Check Windows paths
-    postprocessing_script_win = gsub("/", "\\\\", postprocessing_script)
-    resultsdir_win = gsub("/", "\\\\", resultsdir)
-
-    # Postpro windows
-    postprocessing_command <- sprintf("Rscript %s '%s' '%s' '%s' '%s' '%s'", postprocessing_script_win, site, resultsdir_win, lat, lon, outputSite)
-} else {
+    # Quoting Win routes
+    postprocessing_script_win <- shQuote(postprocessing_script)
+    resultsdir_win <- shQuote(resultsdir)
+    outputSite_win <- shQuote(outputSite)
+    
+    # Postpro Windows
+    postprocessing_command <- sprintf("Rscript %s %s %s %s %s %s", postprocessing_script_win, shQuote(site), resultsdir_win, shQuote(lat), shQuote(lon), outputSite_win)
+  } else {
     # Postpro Unix/Linux/MacOS
     postprocessing_command <- sprintf("Rscript %s '%s' '%s' '%s' '%s' '%s'", postprocessing_script, site, resultsdir, lat, lon, outputSite)
-}
+  }
+  
   system(postprocessing_command, wait = TRUE)
-
+  
 }
+
+
+
+
 
