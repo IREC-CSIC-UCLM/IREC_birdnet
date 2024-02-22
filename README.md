@@ -14,7 +14,7 @@ Once you have docker installed you will need to build the image that contains th
 2) Cd to the downloaded directory and build the image running this command 
 
 ```
-sudo docker build -t birdnet .
+docker build -t birdnet .
 ```
 
 3) Clone this repository or download the Rscripts birdnet.R & processOutputs.R
